@@ -1,0 +1,674 @@
+{
+  "name": "PDF cv's data collection/rejection and shortlisted and file moving",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1xhwOEQF0ouLdvdSwWClrkDzkViHATOAs",
+          "mode": "list",
+          "cachedResultName": "Cv",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1xhwOEQF0ouLdvdSwWClrkDzkViHATOAs"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        -64
+      ],
+      "id": "3f373a75-6672-452d-acfe-656a2d7ef99f",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "SXiPMj1Kaz4eEZOw",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        176,
+        -64
+      ],
+      "id": "87feb1c0-e8c4-4e45-b44c-2937545308a6",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "SXiPMj1Kaz4eEZOw",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        368,
+        -64
+      ],
+      "id": "ed748451-9b13-4af8-8230-84bca7c2801f",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are an HR Recruitment Assistant.\n\nAnalyze the following resume.\n\nJob Description\n\nPosition: AI Automation Engineer\n\nRequired Skills:\n- n8n\n- APIs\n- JavaScript\n- OpenAI\n- Google Sheets\n\nMinimum Experience:\n2 Years\n\nEducation:\nBachelor Degree\n\nResume:\n\n{{ $json.text }}\n\nReturn ONLY valid JSON.\n\n{\n\"name\":\"\",\n\"email\":\"\",\n\"phone\":\"\",\n\"skills\":\"\",\n\"experience\":\"\",\n\"education\":\"\",\n\"summary\":\"\",\n\"match_score\":0,\n\"decision\":\"\",\n\"reason\":\"\"\n}\nReturn ONLY valid JSON matching the output schema.\nDo not return markdown.\nDo not return explanations."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        528,
+        -64
+      ],
+      "id": "75dee990-59ff-48ab-b64b-967e28ea4674",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-flash-lite-latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        384,
+        176
+      ],
+      "id": "331f0ee4-8e38-44a8-9107-74d795d4cd95",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "mdtLrFb22GMzxQLS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1uz6ByMv7V_6FULGmZ8p8nUHshzhd4uMIXy3lH5lWQT8",
+          "mode": "list",
+          "cachedResultName": "Cv's Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uz6ByMv7V_6FULGmZ8p8nUHshzhd4uMIXy3lH5lWQT8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uz6ByMv7V_6FULGmZ8p8nUHshzhd4uMIXy3lH5lWQT8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.output.name }}",
+            "Email": "={{ $json.output.email }}",
+            "Phone": "={{ $json.output.phone }}",
+            "Skills": "={{ $json.output.skills }}",
+            "Experience": "={{ $json.output.experience }}",
+            "Education": "={{ $json.output.education }}",
+            "Summary": "={{ $json.output.summary }}",
+            "Match Score": "={{ $json.output.match_score }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Skills",
+              "displayName": "Skills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Experience",
+              "displayName": "Experience",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Education",
+              "displayName": "Education",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Match Score",
+              "displayName": "Match Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        848,
+        -64
+      ],
+      "id": "45033fa1-0b5d-4e51-8f42-4063ff117ec4",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "7IWmdCNJ26SjhLdM",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"name\": \"string\",\n  \"email\": \"string\",\n  \"phone\": \"string\",\n  \"skills\": \"string\",\n  \"experience\": \"string\",\n  \"education\": \"string\",\n  \"summary\": \"string\",\n  \"match_score\": \"number\",\n  \"decision\": \"string\",\n  \"reason\": \"string\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        576,
+        176
+      ],
+      "id": "3999bdd9-5a4e-4138-b07b-990a9bcf13f5",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "24ab36f7-b039-403f-9061-dbb816749a03",
+              "leftValue": "={{ $json['Match Score'] }}",
+              "rightValue": 75,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": "={{ false }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        912,
+        240
+      ],
+      "id": "3a382d44-1b56-4be7-9a66-3756ed28e70d",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Google Drive Trigger').item.json.id }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "10WHSDvHJ6_Tx_OOXa6gIohT6ge1Mr10J",
+          "mode": "list",
+          "cachedResultName": "Selected cadidates",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/10WHSDvHJ6_Tx_OOXa6gIohT6ge1Mr10J"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        80
+      ],
+      "id": "4180b1d6-6885-4fd0-afa7-b09c6cef8073",
+      "name": "Move file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "SXiPMj1Kaz4eEZOw",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Google Drive Trigger').item.json.id }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1Pdkq2QgaZz3XIUgxfITwhwvODbojuvq_",
+          "mode": "list",
+          "cachedResultName": "Rejected candidates",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1Pdkq2QgaZz3XIUgxfITwhwvODbojuvq_"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1136,
+        400
+      ],
+      "id": "a8d215ff-f21a-4b8e-b877-ca0606472b67",
+      "name": "Move file1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "SXiPMj1Kaz4eEZOw",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-flash-lite-latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1312,
+        256
+      ],
+      "id": "258bca60-5305-4bed-8995-eb1139b2cd0c",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "mdtLrFb22GMzxQLS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-flash-lite-latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1328,
+        576
+      ],
+      "id": "ed5498d4-56af-4c21-8f99-b09d5aa50a4b",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "mdtLrFb22GMzxQLS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "mairamursaleen0@gmail.com",
+        "subject": "You have been Shortlisted",
+        "emailType": "text",
+        "message": "hey you have been shortlisted",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1600,
+        80
+      ],
+      "id": "5ca79510-8579-44e2-bfe4-12110ed40ba2",
+      "name": "Send a message",
+      "webhookId": "9c42dac3-223c-4493-8d2f-ea64b717709d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "cdy9DjcIZuLSzAO9",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "raomaira776@gmail.com",
+        "subject": "You have been rejected",
+        "emailType": "text",
+        "message": "={{ $json.text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1600,
+        400
+      ],
+      "id": "1d0bf135-5f61-4a03-9899-1230a16e848e",
+      "name": "Send a message1",
+      "webhookId": "c65a8990-9a31-4894-8e08-295782155c3e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "cdy9DjcIZuLSzAO9",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.name }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are an HR Manager.  Write a professional email to the candidate  Candidate Name: {{ $json.name }}  Position: Digital Marketing Executive  The candidate has been shortlisted.  Keep the email friendly and professional.  Return only the email body.Do not create subject in email."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1312,
+        80
+      ],
+      "id": "c26b5658-ab23-494c-98c8-0276afef6a1a",
+      "name": "Shortlisted candidate's"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.name }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are an HR Manager.  Write a polite rejection email.  Candidate Name:{{ $json.name }}   Thank the candidate for applying and encourage them to apply again in the future.  Return only the email body.Do not create subject in email."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1328,
+        400
+      ],
+      "id": "13d90f26-c681-483b-93d7-a02f91d9c3ae",
+      "name": "Rejected Candidate's"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        []
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Move file",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Move file1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Move file": {
+      "main": [
+        [
+          {
+            "node": "Shortlisted candidate's",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Shortlisted candidate's",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Move file1": {
+      "main": [
+        [
+          {
+            "node": "Rejected Candidate's",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Rejected Candidate's",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shortlisted candidate's": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rejected Candidate's": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "7bfa095c-cda7-4239-ad0b-5a4cb26e4aeb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4a636b03b99fbd44e4c42673a59320cab9bd2f8b7dbf439bf32a23327a53e72d"
+  },
+  "nodeGroups": [],
+  "id": "yBcdMP4WyouH9zpy",
+  "tags": []
+}
